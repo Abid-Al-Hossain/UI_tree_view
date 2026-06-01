@@ -1,25 +1,82 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #080b12;
-  --panel: rgba(15, 23, 42, 0.82);
-  --panel-strong: rgba(17, 24, 39, 0.96);
-  --line: rgba(148, 163, 184, 0.22);
-  --text: #e5eefb;
-  --muted: #8ea0b8;
-  --accent: #38bdf8;
-  --accent-2: #f59e0b;
+  --bg: #070b16;
+  --surface: #0c142b;
+  --card: #0f1a36;
+  --text: #eaf0ff;
+  --muted: #a9b7e6;
+  --border: rgba(255, 255, 255, 0.12);
+  --primary: #4f7cff;
+  --primary-hover: #3f6fff;
+  --ring: rgba(79, 124, 255, 0.35);
 }
 
-* { box-sizing: border-box; }
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
-  color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 34rem),
-    radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.14), transparent 32rem),
-    linear-gradient(135deg, #070a11 0%, #111827 50%, #05070d 100%);
+    radial-gradient(circle at 12% 12%, color-mix(in oklab, var(--primary) 20%, transparent), transparent 28rem),
+    radial-gradient(circle at 84% 0%, rgba(56, 189, 248, 0.12), transparent 30rem),
+    var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-button, input, select, textarea { font: inherit; }
-code, pre { font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; }
+
+body,
+header,
+footer,
+main,
+section,
+aside,
+button,
+a,
+div {
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+select,
+input[type="color"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"],
+label[for] {
+  cursor: pointer;
+}
+
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="number"],
+input[type="password"],
+textarea {
+  cursor: text;
+}
+
+code,
+pre {
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+.uf-clickable,
+.uf-clickable * {
+  cursor: pointer;
+}

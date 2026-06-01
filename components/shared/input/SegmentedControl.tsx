@@ -1,14 +1,44 @@
 "use client";
 
-export function SegmentedControl<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: Array<{ value: T; label: string }>; onChange: (value: T) => void }) {
-  return (
-    <div className="grid gap-2 text-sm text-slate-300">
-      <span>{label}</span>
-      <div className="flex flex-wrap gap-2 rounded-2xl bg-white/5 p-1">
-        {options.map((option) => (
-          <button key={option.value} type="button" onClick={() => onChange(option.value)} className={`rounded-xl px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] ${value === option.value ? "bg-sky-300 text-slate-950" : "text-slate-300 hover:bg-white/10"}`}>{option.label}</button>
-        ))}
-      </div>
+import { LabeledField } from "../layout/LabeledField";
+
+type Option<T extends string = string> = { value: T; label: string };
+
+export function SegmentedControl<T extends string = string>(props: {
+  label?: string;
+  value: T;
+  onChange: (v: T) => void;
+  items?: Option<T>[];
+  options?: Option<T>[];
+}) {
+  const items = props.items ?? props.options ?? [];
+  const control = (
+    <div
+      className="inline-flex w-full rounded-xl border p-1"
+      style={{
+        borderColor: "var(--border)",
+        background: "color-mix(in oklab, var(--surface) 65%, transparent)",
+      }}
+    >
+      {items.map((it) => (
+        <button
+          key={it.value}
+          type="button"
+          onClick={() => props.onChange(it.value)}
+          className="w-full rounded-lg px-3 py-2 text-sm font-semibold uf-clickable transition-all"
+          style={{
+            background: props.value === it.value ? "var(--primary)" : "transparent",
+            color: props.value === it.value ? "white" : "var(--text)",
+            boxShadow:
+              props.value === it.value ? "0 1px 2px rgba(0,0,0,0.1)" : "none",
+          }}
+        >
+          {it.label}
+        </button>
+      ))}
     </div>
   );
+
+  if (props.label) return <LabeledField label={props.label}>{control}</LabeledField>;
+  return control;
 }

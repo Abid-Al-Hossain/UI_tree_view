@@ -1,5 +1,47 @@
 "use client";
 
-export default function Switch({ label, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) {
-  return <button type="button" onClick={() => onChange(!checked)} className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-slate-900 px-3 py-2 text-left text-sm text-slate-200"><span>{label}</span><span className={`h-6 w-11 rounded-full p-1 transition ${checked ? "bg-sky-300" : "bg-slate-700"}`}><span className={`block h-4 w-4 rounded-full bg-slate-950 transition ${checked ? "translate-x-5" : ""}`} /></span></button>;
+export interface SwitchProps {
+  label?: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+}
+
+export default function Switch({
+  label,
+  checked,
+  onChange,
+  disabled,
+}: SwitchProps) {
+  const switchNode = (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      disabled={disabled}
+      className={`${
+        checked ? "bg-[var(--primary)]" : "bg-slate-700"
+      } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed`}
+    >
+      <span
+        className={`${
+          checked ? "translate-x-6" : "translate-x-1"
+        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+      />
+    </button>
+  );
+
+  if (label) {
+    return (
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium text-slate-300 pointer-events-none">
+          {label}
+        </label>
+        {switchNode}
+      </div>
+    );
+  }
+
+  return switchNode;
 }

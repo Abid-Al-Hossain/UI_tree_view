@@ -7,6 +7,8 @@ import Select from "@/components/shared/input/Select";
 import Slider from "@/components/shared/input/Slider";
 import Switch from "@/components/shared/input/Switch";
 import { SegmentedControl } from "@/components/shared/input/SegmentedControl";
+import AppShell from "@/components/shared/layout/AppShell";
+import { PlaygroundLayout } from "@/components/shared/layout/PlaygroundLayout";
 import { SectionCard } from "@/components/shared/layout/SectionCard";
 import SectionSelector from "@/components/shared/layout/SectionSelector";
 import { SharedPreviewDownloadPanel } from "@/components/shared/layout/SharedPreviewDownloadPanel";
@@ -168,40 +170,69 @@ function renderPreview(state: StudioState) {
 }
 
 function buildReactCode(state: StudioState) {
-  return `import * as React from "react";\n\nexport default function TreeView() {\n  const state = ${JSON.stringify(state, null, 2)};\n\n  return (\n    <section\n      id={state.id}\n      aria-label={state.label}\n      style={{\n        width: state.width,\n        minHeight: state.height,\n        borderRadius: state.radius,\n        border: \`\${state.borderWidth}px solid \${state.border}\`,\n        background: state.background,\n        color: state.foreground,\n        fontFamily: state.fontFamily,\n        padding: state.gap * 1.5,\n      }}\n    >\n      <strong>{state.title}</strong>\n      <p>{state.description}</p>\n      <small>{state.helper}</small>\n    </section>\n  );\n}\n`;
+  return `import * as React from "react";
+
+export default function TreeView() {
+  const state = ${JSON.stringify(state, null, 2)};
+
+  return (
+    <section
+      id={state.id}
+      aria-label={state.label}
+      style={{
+        width: state.width,
+        minHeight: state.height,
+        borderRadius: state.radius,
+        border: \`\${state.borderWidth}px solid \${state.border}\`,
+        background: state.background,
+        color: state.foreground,
+        fontFamily: state.fontFamily,
+        padding: state.gap * 1.5,
+      }}
+    >
+      <strong>{state.title}</strong>
+      <p>{state.description}</p>
+      <small>{state.helper}</small>
+    </section>
+  );
+}
+`;
 }
 
 export default function Page() {
   const [state, setState] = useState<StudioState>(defaultState);
   const [activeSection, setActiveSection] = useState<SectionId>("presets");
   const [downloadName, setDownloadName] = useState("tree-view-component");
-  const [previewBgMode, setPreviewBgMode] = useState<PreviewCanvasMode>("studio");
-  const [previewBgInput, setPreviewBgInput] = useState("#0f172a");
+  const [previewBgMode, setPreviewBgMode] = useState<PreviewCanvasMode>("custom");
+  const [previewBgInput, setPreviewBgInput] = useState("#0b1220");
   const [previewResetKey, setPreviewResetKey] = useState(0);
   const code = useMemo(() => buildReactCode(state), [state]);
   const preview = useMemo(() => <div key={previewResetKey}>{renderPreview(state)}</div>, [previewResetKey, state]);
   const update = <K extends keyof StudioState>(key: K, value: StudioState[K]) => setState((current) => ({ ...current, [key]: value }));
 
-  return (
-    <main className="mx-auto grid min-h-screen max-w-[1500px] gap-6 px-5 py-6 lg:grid-cols-[430px_1fr]">
-      <aside className="space-y-5">
-        <header className="rounded-[2rem] border border-white/10 bg-slate-950/70 p-5 shadow-2xl shadow-black/30">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-200">UI Foundry Standalone</p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight">Tree View Studio</h1>
-          <p className="mt-2 text-sm text-slate-400">Self-contained, React-only, buyer-ready tree view generator.</p>
-        </header>
-        <SectionSelector sections={sections} active={activeSection} onChange={setActiveSection} />
+  const controls = (
+    <>
+      <SectionSelector sections={sections} active={activeSection} onChange={setActiveSection} />
 
-        {activeSection === "presets" && <SectionCard title="Presets" subtitle="Structured full-state presets.">{presets.map((preset) => <button key={preset.archetype} type="button" onClick={() => { setState(preset.state); setPreviewResetKey((v) => v + 1); }} className="block w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10"><strong>{preset.archetype}</strong><span className="ml-2 text-xs uppercase tracking-[0.16em] text-slate-400">{preset.variant} / {preset.size}</span><p className="mt-1 text-sm text-slate-400">{preset.tags.join(", ")}</p></button>)}</SectionCard>}
-        {activeSection === "basics" && <SectionCard title="Basics" subtitle="Core component identity."><Input label="Title" value={state.title} onChange={(v) => update("title", v)} /><Input label="Label" value={state.label} onChange={(v) => update("label", v)} /><Input label="Value" value={state.value} onChange={(v) => update("value", v)} /><Input label="Download filename" value={downloadName} onChange={setDownloadName} /></SectionCard>}
-        {activeSection === "content" && <SectionCard title="Content" subtitle="Text, descriptions, and generated item model."><Input label="Description" value={state.description} onChange={(v) => update("description", v)} /><Input label="Helper text" value={state.helper} onChange={(v) => update("helper", v)} /><Slider label="Item count" value={state.itemCount} min={1} max={8} onChange={(v) => update("itemCount", v)} /><FontFamilySelect value={state.fontFamily} onChange={(v) => update("fontFamily", v)} /><Slider label="Font size" value={state.fontSize} min={12} max={28} onChange={(v) => update("fontSize", v)} /></SectionCard>}
-        {activeSection === "layout" && <SectionCard title="Layout" subtitle="Native spacing and sizing controls."><SegmentedControl label="Density" value={state.density} onChange={(v) => update("density", v)} options={[{ value: "compact", label: "Compact" }, { value: "balanced", label: "Balanced" }, { value: "spacious", label: "Spacious" }]} /><Slider label="Width" value={state.width} min={220} max={720} onChange={(v) => update("width", v)} /><Slider label="Height" value={state.height} min={80} max={480} onChange={(v) => update("height", v)} /><Slider label="Gap" value={state.gap} min={4} max={36} onChange={(v) => update("gap", v)} /></SectionCard>}
-        {activeSection === "surface" && <SectionCard title="Surface" subtitle="Button-canon color, radius, border, and shadow controls."><SegmentedControl label="Tone" value={state.tone} onChange={(v) => update("tone", v)} options={[{ value: "neutral", label: "Neutral" }, { value: "brand", label: "Brand" }, { value: "success", label: "Success" }, { value: "warning", label: "Warning" }, { value: "danger", label: "Danger" }]} /><ColorControl label="Accent" value={state.accent} onChange={(v) => update("accent", v)} /><ColorControl label="Background" value={state.background} onChange={(v) => update("background", v)} /><ColorControl label="Foreground" value={state.foreground} onChange={(v) => update("foreground", v)} /><ColorControl label="Border" value={state.border} onChange={(v) => update("border", v)} /><Slider label="Radius" value={state.radius} min={0} max={56} onChange={(v) => update("radius", v)} /><Slider label="Border width" value={state.borderWidth} min={0} max={8} onChange={(v) => update("borderWidth", v)} /><Slider label="Shadow" value={state.shadow} min={0} max={72} onChange={(v) => update("shadow", v)} /></SectionCard>}
-        {activeSection === "states" && <SectionCard title="State Preview" subtitle="Preview native component states honestly."><Select label="Preview state" value={state.previewState} options={["default", "hover", "focus", "active", "disabled", "invalid", "loading", "empty"]} onChange={(v) => update("previewState", v)} /><Switch label="Disabled" checked={state.disabled} onChange={(v) => update("disabled", v)} /><Switch label="Interactive" checked={state.interactive} onChange={(v) => update("interactive", v)} /><Switch label="Motion safe effects" checked={state.motion} onChange={(v) => update("motion", v)} /></SectionCard>}
-        {activeSection === "accessibility" && <SectionCard title="Accessibility" subtitle="Native attributes and semantic guidance."><Input label="id" value={state.id} onChange={(v) => update("id", v)} /><Input label="name" value={state.name} onChange={(v) => update("name", v)} /><Switch label="Required where native" checked={state.required} onChange={(v) => update("required", v)} /><div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">{nativeFeatures.map((feature) => <p key={feature}>- {feature}</p>)}</div></SectionCard>}
-      </aside>
-      <SharedPreviewDownloadPanel preview={preview} code={code} downloadName={downloadName} previewBgMode={previewBgMode} previewBgInput={previewBgInput} onPreviewBgMode={setPreviewBgMode} onPreviewBgInput={setPreviewBgInput} />
-    </main>
+      {activeSection === "presets" && <SectionCard title="Presets" subtitle="Structured full-state presets.">{presets.map((preset) => <button key={preset.archetype} type="button" onClick={() => { setState(preset.state); setPreviewResetKey((v) => v + 1); }} className="block w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10"><strong>{preset.archetype}</strong><span className="ml-2 text-xs uppercase tracking-[0.16em] text-slate-400">{preset.variant} / {preset.size}</span><p className="mt-1 text-sm text-slate-400">{preset.tags.join(", ")}</p></button>)}</SectionCard>}
+      {activeSection === "basics" && <SectionCard title="Basics" subtitle="Core component identity."><Input label="Title" value={state.title} onChange={(v) => update("title", v)} /><Input label="Label" value={state.label} onChange={(v) => update("label", v)} /><Input label="Value" value={state.value} onChange={(v) => update("value", v)} /><Input label="Download filename" value={downloadName} onChange={setDownloadName} /></SectionCard>}
+      {activeSection === "content" && <SectionCard title="Content" subtitle="Text, descriptions, and generated item model."><Input label="Description" value={state.description} onChange={(v) => update("description", v)} /><Input label="Helper text" value={state.helper} onChange={(v) => update("helper", v)} /><Slider label="Item count" value={state.itemCount} min={1} max={8} onChange={(v) => update("itemCount", v)} /><FontFamilySelect value={state.fontFamily} onChange={(v) => update("fontFamily", v)} /><Slider label="Font size" value={state.fontSize} min={12} max={28} onChange={(v) => update("fontSize", v)} /></SectionCard>}
+      {activeSection === "layout" && <SectionCard title="Layout" subtitle="Native spacing and sizing controls."><SegmentedControl label="Density" value={state.density} onChange={(v) => update("density", v)} options={[{ value: "compact", label: "Compact" }, { value: "balanced", label: "Balanced" }, { value: "spacious", label: "Spacious" }]} /><Slider label="Width" value={state.width} min={220} max={720} onChange={(v) => update("width", v)} /><Slider label="Height" value={state.height} min={80} max={480} onChange={(v) => update("height", v)} /><Slider label="Gap" value={state.gap} min={4} max={36} onChange={(v) => update("gap", v)} /></SectionCard>}
+      {activeSection === "surface" && <SectionCard title="Surface" subtitle="Button-canon color, radius, border, and shadow controls."><SegmentedControl label="Tone" value={state.tone} onChange={(v) => update("tone", v)} options={[{ value: "neutral", label: "Neutral" }, { value: "brand", label: "Brand" }, { value: "success", label: "Success" }, { value: "warning", label: "Warning" }, { value: "danger", label: "Danger" }]} /><ColorControl label="Accent" value={state.accent} onChange={(v) => update("accent", v)} /><ColorControl label="Background" value={state.background} onChange={(v) => update("background", v)} /><ColorControl label="Foreground" value={state.foreground} onChange={(v) => update("foreground", v)} /><ColorControl label="Border" value={state.border} onChange={(v) => update("border", v)} /><Slider label="Radius" value={state.radius} min={0} max={56} onChange={(v) => update("radius", v)} /><Slider label="Border width" value={state.borderWidth} min={0} max={8} onChange={(v) => update("borderWidth", v)} /><Slider label="Shadow" value={state.shadow} min={0} max={72} onChange={(v) => update("shadow", v)} /></SectionCard>}
+      {activeSection === "states" && <SectionCard title="State Preview" subtitle="Preview native component states honestly."><Select label="Preview state" value={state.previewState} options={["default", "hover", "focus", "active", "disabled", "invalid", "loading", "empty"]} onChange={(v) => update("previewState", v)} /><Switch label="Disabled" checked={state.disabled} onChange={(v) => update("disabled", v)} /><Switch label="Interactive" checked={state.interactive} onChange={(v) => update("interactive", v)} /><Switch label="Motion safe effects" checked={state.motion} onChange={(v) => update("motion", v)} /></SectionCard>}
+      {activeSection === "accessibility" && <SectionCard title="Accessibility" subtitle="Native attributes and semantic guidance."><Input label="id" value={state.id} onChange={(v) => update("id", v)} /><Input label="name" value={state.name} onChange={(v) => update("name", v)} /><Switch label="Required where native" checked={state.required} onChange={(v) => update("required", v)} /><div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">{nativeFeatures.map((feature) => <p key={feature}>- {feature}</p>)}</div></SectionCard>}
+
+    </>
+  );
+
+  const output = (
+    <SharedPreviewDownloadPanel preview={preview} code={code} downloadName={downloadName} previewBgMode={previewBgMode} previewBgInput={previewBgInput} onPreviewBgMode={setPreviewBgMode} onPreviewBgInput={setPreviewBgInput} />
+  );
+
+  return (
+    <AppShell contentOverflow="hidden">
+      <PlaygroundLayout title="Tree View Studio" controls={controls} preview={output} />
+    </AppShell>
   );
 }
 
