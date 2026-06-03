@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { norm } from "./colorUtils";
 
+/**
+ * Smart ColorControl: Matches Action Button's exact UI but manages text state internally.
+ *
+ * Props:
+ * - label: Title
+ * - value: The actual hex color (source of truth)
+ * - onChange: Callback for new hex color
+ * - palette: Optional array of hex colors
+ */
 export default function ColorControl(props: {
   label: string;
   value: string;
@@ -10,20 +19,33 @@ export default function ColorControl(props: {
   palette?: readonly string[];
 }) {
   const { value, onChange, label, palette } = props;
+
+  // Local state for the text input, initialized from prop
   const [text, setText] = useState(value);
+
+  // Derived validation
   const { ok, hex, rgb } = norm(text);
 
+  // Sync text if prop changes externally (and isn't just valid equivalent of current text)
+  // We avoid clobbering user typing if they are typing "rgb(..."
   useEffect(() => {
+    // If exact match, ignore
     if (value === text) return;
+
+    // If the prop value matches the *parsed* text, ignore (allows user to type "rgb(0,0,0)" while value is "#000000")
+    // But if prop changed to something else entirely (e.g. undo), update text.
     const currentParsed = norm(text);
     if (currentParsed.ok && currentParsed.hex === value) return;
+
     setText(value);
   }, [text, value]);
 
   const handleChange = (newText: string) => {
     setText(newText);
     const parsed = norm(newText);
-    if (parsed.ok) onChange(parsed.hex);
+    if (parsed.ok) {
+      onChange(parsed.hex);
+    }
   };
 
   const defaultPalette = [

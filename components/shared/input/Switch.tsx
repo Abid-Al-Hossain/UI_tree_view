@@ -1,5 +1,9 @@
 "use client";
 
+import React from "react";
+import { Switch as HeadlessSwitch } from "@headlessui/react";
+import { LabeledField } from "../layout/LabeledField";
+
 export interface SwitchProps {
   label?: string;
   checked: boolean;
@@ -14,11 +18,9 @@ export default function Switch({
   disabled,
 }: SwitchProps) {
   const switchNode = (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
+    <HeadlessSwitch
+      checked={checked}
+      onChange={onChange}
       disabled={disabled}
       className={`${
         checked ? "bg-[var(--primary)]" : "bg-slate-700"
@@ -29,7 +31,7 @@ export default function Switch({
           checked ? "translate-x-6" : "translate-x-1"
         } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
       />
-    </button>
+    </HeadlessSwitch>
   );
 
   if (label) {

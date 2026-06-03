@@ -2,11 +2,7 @@
 
 import React from "react";
 
-export function SectionCard({
-  title,
-  subtitle,
-  children,
-}: {
+export function SectionCard(props: {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
@@ -21,17 +17,20 @@ export function SectionCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold" style={{ color: "var(--text)" }}>
-            {title}
+          <div
+            className="text-sm font-semibold"
+            style={{ color: "var(--text)" }}
+          >
+            {props.title}
           </div>
-        {subtitle ? (
-          <div className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
-            {subtitle}
-          </div>
-        ) : null}
+          {props.subtitle ? (
+            <div className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
+              {props.subtitle}
+            </div>
+          ) : null}
         </div>
       </div>
-      <div className="mt-4 space-y-4">{children}</div>
+      <div className="mt-4">{props.children}</div>
     </div>
   );
 }

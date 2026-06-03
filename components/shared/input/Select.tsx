@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { LabeledField } from "../layout/LabeledField";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 export interface SelectOption {
   value: string;
@@ -9,33 +9,15 @@ export interface SelectOption {
 }
 
 export interface SelectProps {
-  label?: React.ReactNode;
+  label?: string;
   value: string;
-  onChange: (v: string) => void;
-  options: Array<SelectOption | string>;
-  children?: React.ReactNode;
+  onChange: (v: any) => void;
+  options: SelectOption[] | string[]; // Pre-defined options
+  children?: React.ReactNode; // Or raw <option> children
   disabled?: boolean;
   className?: string;
   placeholder?: string;
-  startContent?: React.ReactNode;
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-      <path
-        d="m6 9 6 6 6-6"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
-
-function normalizeOption(option: SelectOption | string): SelectOption {
-  return typeof option === "string" ? { value: option, label: option } : option;
+  startContent?: React.ReactNode; // Icon/Element on the left
 }
 
 export default function Select(props: SelectProps) {
@@ -50,6 +32,10 @@ export default function Select(props: SelectProps) {
     placeholder,
     startContent,
   } = props;
+
+  const normalizedOptions = options.map((option) =>
+    typeof option === "string" ? { value: option, label: option } : option,
+  );
 
   const select = (
     <div className={`relative w-full ${className || ""}`}>
@@ -68,7 +54,7 @@ export default function Select(props: SelectProps) {
         }`}
         style={{
           borderColor: "var(--border)",
-          background: "color-mix(in oklab, var(--card) 65%, transparent)",
+          background: "color-mix(in oklab, var(--card) 65%, transparent)", // Semi-transparent card bg
           color: "var(--text)",
         }}
       >
@@ -77,27 +63,31 @@ export default function Select(props: SelectProps) {
             {placeholder}
           </option>
         )}
-        {options && options.length > 0
-          ? options.map((option) => {
-              const opt = normalizeOption(option);
-              return (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              );
-            })
+        {normalizedOptions && normalizedOptions.length > 0
+          ? normalizedOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))
           : children}
       </select>
 
+      {/* Custom Chevron */}
       <div
         className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
         style={{ color: "var(--muted)" }}
       >
-        <ChevronDownIcon />
+        <ChevronDownIcon className="w-4 h-4" strokeWidth={2} />
       </div>
     </div>
   );
 
-  if (label) return <LabeledField label={label}>{select}</LabeledField>;
-  return select;
+  if (!label) return select;
+
+  return (
+    <label className="grid gap-2 text-sm font-medium" style={{ color: "var(--text)" }}>
+      <span>{label}</span>
+      {select}
+    </label>
+  );
 }

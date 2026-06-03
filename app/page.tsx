@@ -170,33 +170,96 @@ function renderPreview(state: StudioState) {
 }
 
 function buildReactCode(state: StudioState) {
-  return `import * as React from "react";
-
-export default function TreeView() {
-  const state = ${JSON.stringify(state, null, 2)};
-
-  return (
-    <section
-      id={state.id}
-      aria-label={state.label}
-      style={{
-        width: state.width,
-        minHeight: state.height,
-        borderRadius: state.radius,
-        border: \`\${state.borderWidth}px solid \${state.border}\`,
-        background: state.background,
-        color: state.foreground,
-        fontFamily: state.fontFamily,
-        padding: state.gap * 1.5,
-      }}
-    >
-      <strong>{state.title}</strong>
-      <p>{state.description}</p>
-      <small>{state.helper}</small>
-    </section>
-  );
-}
-`;
+  const configJson = JSON.stringify(state, null, 2);
+  return [
+    "import * as React from \"react\";",
+    "",
+    "const KIND = \"tree\";",
+    "const CONFIG = " + configJson + ";",
+    "",
+    "function buildItems(count) {",
+    "  return Array.from({ length: Math.max(1, Number(count) || 1) }, (_, index) => index + 1);",
+    "}",
+    "",
+    "function getShellStyle(state) {",
+    "  return {",
+    "    width: state.width,",
+    "    minHeight: state.height,",
+    "    gap: state.gap,",
+    "    borderRadius: state.radius,",
+    "    border: state.borderWidth + \"px solid \" + state.border,",
+    "    boxShadow: \"0 \" + Math.round(state.shadow / 3) + \"px \" + state.shadow + \"px rgba(0,0,0,.28)\",",
+    "    background: state.background,",
+    "    color: state.foreground,",
+    "    fontFamily: state.fontFamily,",
+    "    fontSize: state.fontSize,",
+    "    opacity: state.disabled ? 0.55 : 1,",
+    "    padding: Math.max(14, state.gap * 1.5),",
+    "    boxSizing: \"border-box\",",
+    "  };",
+    "}",
+    "",
+    "function Pill({ children, state }) {",
+    "  return (",
+    "    <span style={{ border: \"1px solid \" + state.border, borderRadius: 999, padding: \"6px 10px\", color: state.accent }}>",
+    "      {children}",
+    "    </span>",
+    "  );",
+    "}",
+    "",
+    "export default function TreeView() {",
+    "  const state = CONFIG;",
+    "  const items = buildItems(state.itemCount);",
+    "  const shell = getShellStyle(state);",
+    "",
+    "  switch (KIND) {",
+    "    case \"date\":",
+    "      return <div style={{ ...shell, display: \"grid\", alignContent: \"center\" }}><label htmlFor={state.id}>{state.label}</label><input id={state.id} name={state.name} required={state.required} disabled={state.disabled} type=\"date\" style={{ borderRadius: 12, border: \"1px solid \" + state.border, background: \"rgba(255,255,255,.1)\", color: state.foreground, padding: 12 }} /><small>{state.helper}</small></div>;",
+    "    case \"time\":",
+    "      return <div style={{ ...shell, display: \"grid\", alignContent: \"center\" }}><label htmlFor={state.id}>{state.label}</label><input id={state.id} name={state.name} required={state.required} disabled={state.disabled} type=\"time\" style={{ borderRadius: 12, border: \"1px solid \" + state.border, background: \"rgba(255,255,255,.1)\", color: state.foreground, padding: 12 }} /><small>{state.helper}</small></div>;",
+    "    case \"file\":",
+    "      return <div style={{ ...shell, display: \"grid\", placeItems: \"center\", textAlign: \"center\" }}><strong>{state.label}</strong><p>{state.description}</p><input id={state.id} name={state.name} disabled={state.disabled} type=\"file\" multiple /></div>;",
+    "    case \"otp\":",
+    "      return <div style={{ ...shell, display: \"grid\", placeItems: \"center\" }}><strong>{state.label}</strong><div style={{ display: \"flex\", gap: 8 }}>{items.map((i) => <input key={i} aria-label={\"Digit \" + i} maxLength={1} style={{ width: 40, height: 48, borderRadius: 12, border: \"1px solid \" + state.border, background: \"rgba(255,255,255,.1)\", color: state.foreground, textAlign: \"center\" }} />)}</div><small>{state.helper}</small></div>;",
+    "    case \"slider\":",
+    "      return <div style={{ ...shell, display: \"grid\", alignContent: \"center\" }}><label htmlFor={state.id}>{state.label}</label><input id={state.id} name={state.name} type=\"range\" min={0} max={100} defaultValue={60} disabled={state.disabled} style={{ accentColor: state.accent }} /><small>{state.helper}</small></div>;",
+    "    case \"select\":",
+    "      return <div style={{ ...shell, display: \"grid\", alignContent: \"center\" }}><label htmlFor={state.id}>{state.label}</label><select id={state.id} name={state.name} required={state.required} disabled={state.disabled} style={{ borderRadius: 12, border: \"1px solid \" + state.border, background: state.background, color: state.foreground, padding: 12 }}>{items.map((i) => <option key={i}>Option {i}</option>)}</select><small>{state.helper}</small></div>;",
+    "    case \"search\":",
+    "      return <div style={{ ...shell, display: \"grid\", alignContent: \"center\" }}><label htmlFor={state.id}>{state.label}</label><input id={state.id} name={state.name} type=\"search\" placeholder=\"Search components...\" disabled={state.disabled} style={{ borderRadius: 12, border: \"1px solid \" + state.border, background: \"rgba(255,255,255,.1)\", color: state.foreground, padding: 12 }} /><small>{state.helper}</small></div>;",
+    "    case \"accordion\":",
+    "      return <div style={{ ...shell, display: \"grid\" }}>{items.map((i) => <details key={i} open={i === 1} style={{ borderRadius: 12, border: \"1px solid rgba(255,255,255,.1)\", padding: 12 }}><summary>{state.label} {i}</summary><p>{state.description}</p></details>)}</div>;",
+    "    case \"tabs\":",
+    "      return <div style={shell}><div role=\"tablist\" style={{ display: \"flex\", gap: 8 }}>{items.map((i) => <Pill key={i} state={state}>Tab {i}</Pill>)}</div><div style={{ marginTop: 16, borderRadius: 12, border: \"1px solid rgba(255,255,255,.1)\", padding: 16 }}>Panel content for {state.label}</div></div>;",
+    "    case \"table\":",
+    "    case \"tables\":",
+    "      return <table style={shell}><caption>{state.label}</caption><tbody>{items.map((i) => <tr key={i}><th style={{ padding: 8, textAlign: \"left\" }}>Row {i}</th><td style={{ padding: 8 }}>{state.value}</td></tr>)}</tbody></table>;",
+    "    case \"modal\":",
+    "    case \"drawer\":",
+    "    case \"popover\":",
+    "    case \"toast\":",
+    "      return <div style={{ ...shell, display: \"grid\", placeItems: \"center\" }}><div style={{ borderRadius: 16, border: \"1px solid rgba(255,255,255,.1)\", background: \"rgba(0,0,0,.25)\", padding: 20 }}><strong>{state.title}</strong><p>{state.description}</p><button style={{ border: 0, borderRadius: 12, padding: \"8px 16px\", background: state.accent, color: \"#020617\" }}>Action</button></div></div>;",
+    "    case \"audio\":",
+    "      return <div style={{ ...shell, display: \"grid\", alignContent: \"center\" }}><strong>{state.label}</strong><audio controls style={{ width: \"100%\" }} /><small>{state.helper}</small></div>;",
+    "    case \"video\":",
+    "      return <div style={{ ...shell, display: \"grid\", alignContent: \"center\" }}><strong>{state.label}</strong><video controls style={{ width: \"100%\", borderRadius: 12, background: \"rgba(0,0,0,.4)\" }} /><small>{state.helper}</small></div>;",
+    "    case \"chart\":",
+    "      return <div style={{ ...shell, display: \"flex\", alignItems: \"end\", justifyContent: \"center\" }}>{items.map((i) => <div key={i} style={{ height: 36 + i * 22, width: 48, borderRadius: \"12px 12px 0 0\", background: state.accent, opacity: 0.8 }} />)}</div>;",
+    "    case \"skeleton\":",
+    "      return <div style={{ ...shell, display: \"grid\", alignContent: \"center\" }}>{items.map((i) => <div key={i} style={{ height: 20, width: 55 + i * 8 + \"%\", borderRadius: 999, background: \"rgba(255,255,255,.2)\" }} />)}</div>;",
+    "    case \"breadcrumb\":",
+    "      return <nav aria-label={state.label} style={{ ...shell, display: \"flex\", alignItems: \"center\" }}>{items.map((i) => <span key={i}>{i > 1 ? \" / \" : \"\"}Level {i}</span>)}</nav>;",
+    "    case \"stepper\":",
+    "      return <ol style={{ ...shell, display: \"flex\", alignItems: \"center\", justifyContent: \"center\" }}>{items.map((i) => <li key={i} style={{ display: \"flex\", alignItems: \"center\", gap: 8 }}><Pill state={state}>{i}</Pill><span>Step {i}</span></li>)}</ol>;",
+    "    case \"grid\":",
+    "    case \"gallery\":",
+    "      return <div style={{ ...shell, display: \"grid\", gridTemplateColumns: \"repeat(2, minmax(0, 1fr))\" }}>{items.map((i) => <div key={i} style={{ borderRadius: 12, background: \"rgba(255,255,255,.1)\", padding: 20 }}>Item {i}</div>)}</div>;",
+    "    default:",
+    "      return <div style={{ ...shell, display: \"flex\", flexDirection: \"column\", justifyContent: \"center\" }}><strong>{state.title}</strong><p>{state.description}</p><div style={{ display: \"flex\", flexWrap: \"wrap\", gap: 8 }}>{items.map((i) => <Pill key={i} state={state}>{state.label} {i}</Pill>)}</div></div>;",
+    "  }",
+    "}",
+    ""
+  ].join("\n");
 }
 
 export default function Page() {

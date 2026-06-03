@@ -8,27 +8,37 @@ export interface Section<T extends string = string> {
   icon?: React.ReactNode;
 }
 
-type LegacyProps<T extends string = string> = {
+export interface SectionSelectorProps<T extends string = string> {
+  /** Array of section definitions */
   sections: Section<T>[];
-  active?: T;
-  onChange?: (id: T) => void;
+  /** Currently active section ID */
   activeSection?: T;
+  active?: T;
+  /** Callback when section changes */
   onSectionChange?: (id: T) => void;
+  onChange?: (id: T) => void;
+  /** Number of columns in grid (default: adapts to screen size) */
   columns?: 2 | 3 | 4 | 5;
+  /** Title above sections (default: "Sections") */
   title?: string;
-};
+}
 
+/**
+ * SectionSelector - Reusable section tabs/buttons for playground controls.
+ * Used to switch between different editing sections (Basics, Sizing, Colors, etc.)
+ */
 export default function SectionSelector<T extends string = string>({
   sections,
-  active,
-  onChange,
   activeSection,
+  active,
   onSectionChange,
+  onChange,
   columns,
   title = "Sections",
-}: LegacyProps<T>) {
-  const selected = activeSection ?? active ?? sections[0]?.id;
-  const change = onSectionChange ?? onChange ?? (() => undefined);
+}: SectionSelectorProps<T>) {
+  const selectedSection = activeSection ?? active ?? sections[0]?.id;
+  const handleSectionChange = onSectionChange ?? onChange;
+  // Build grid classes based on columns prop
   const getGridClasses = () => {
     if (columns) {
       const colMap = {
@@ -39,6 +49,7 @@ export default function SectionSelector<T extends string = string>({
       };
       return colMap[columns];
     }
+    // Default: adaptive based on section count
     if (sections.length <= 4) return "grid-cols-2 sm:grid-cols-4";
     if (sections.length <= 6) return "grid-cols-2 sm:grid-cols-3";
     return "grid-cols-2 sm:grid-cols-3 xl:grid-cols-4";
@@ -52,7 +63,10 @@ export default function SectionSelector<T extends string = string>({
         background: "color-mix(in oklab, var(--card) 70%, transparent)",
       }}
     >
-      <div className="mb-3 text-xs font-semibold" style={{ color: "var(--muted)" }}>
+      <div
+        className="text-xs font-semibold mb-3"
+        style={{ color: "var(--muted)" }}
+      >
         {title}
       </div>
       <div className={`grid gap-3 ${getGridClasses()}`}>
@@ -60,15 +74,18 @@ export default function SectionSelector<T extends string = string>({
           <button
             key={section.id}
             type="button"
-            onClick={() => change(section.id)}
-            className="uf-clickable min-h-[52px] w-full rounded-xl border px-4 py-3 text-center text-sm font-semibold leading-snug whitespace-normal break-words transition-all"
+            onClick={() => handleSectionChange?.(section.id)}
+            className="min-h-[52px] w-full rounded-xl border px-4 py-3 text-sm font-semibold leading-snug text-center whitespace-normal break-words transition-all uf-clickable"
             style={{
               borderColor: "var(--border)",
-              background: selected === section.id ? "var(--primary)" : "transparent",
-              color: selected === section.id ? "white" : "var(--text)",
+              background:
+                selectedSection === section.id ? "var(--primary)" : "transparent",
+              color: selectedSection === section.id ? "white" : "var(--text)",
             }}
           >
-            {section.icon ? <span className="mr-2 inline-flex">{section.icon}</span> : null}
+            {section.icon && (
+              <span className="mr-2 inline-flex">{section.icon}</span>
+            )}
             {section.label}
           </button>
         ))}

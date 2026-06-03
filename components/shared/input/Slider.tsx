@@ -1,38 +1,49 @@
 "use client";
 
-import { LabeledField } from "../layout/LabeledField";
+import React from "react";
 
 export interface SliderProps {
-  label?: string;
   value: string | number;
-  onChange: (v: number) => void;
+  onChange: (v: any) => void;
   min: number;
   max: number;
   step?: number;
+  label?: string;
   disabled?: boolean;
 }
 
 export default function Slider(props: SliderProps) {
-  const slider = (
+  const input = (
     <input
       type="range"
       min={props.min}
       max={props.max}
       step={props.step ?? 1}
       value={props.value}
-      onChange={(e) => props.onChange(Number(e.target.value))}
+      onChange={(e) => {
+        if (props.label) {
+          (props.onChange as (v: number) => void)(Number(e.target.value));
+          return;
+        }
+
+        (props.onChange as (v: string) => void)(e.target.value);
+      }}
       disabled={props.disabled}
       className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary)] hover:accent-[var(--primary-hover)] transition-all"
     />
   );
 
-  if (props.label) {
-    return (
-      <LabeledField label={props.label} hint={props.value}>
-        {slider}
-      </LabeledField>
-    );
-  }
+  if (!props.label) return input;
 
-  return slider;
+  return (
+    <label className="grid gap-2 text-sm font-medium" style={{ color: "var(--text)" }}>
+      <span className="flex items-center justify-between gap-3">
+        <span>{props.label}</span>
+        <span className="text-xs" style={{ color: "var(--muted)" }}>
+          {props.value}
+        </span>
+      </span>
+      {input}
+    </label>
+  );
 }

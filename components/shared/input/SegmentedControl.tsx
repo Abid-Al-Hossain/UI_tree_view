@@ -1,15 +1,13 @@
 "use client";
 
-import { LabeledField } from "../layout/LabeledField";
+import React from "react";
 
-type Option<T extends string = string> = { value: T; label: string };
-
-export function SegmentedControl<T extends string = string>(props: {
+export function SegmentedControl(props: {
   label?: string;
-  value: T;
-  onChange: (v: T) => void;
-  items?: Option<T>[];
-  options?: Option<T>[];
+  value: string;
+  onChange: (v: any) => void;
+  items?: { value: string; label: string }[];
+  options?: { value: string; label: string }[];
 }) {
   const items = props.items ?? props.options ?? [];
   const control = (
@@ -27,7 +25,8 @@ export function SegmentedControl<T extends string = string>(props: {
           onClick={() => props.onChange(it.value)}
           className="w-full rounded-lg px-3 py-2 text-sm font-semibold uf-clickable transition-all"
           style={{
-            background: props.value === it.value ? "var(--primary)" : "transparent",
+            background:
+              props.value === it.value ? "var(--primary)" : "transparent",
             color: props.value === it.value ? "white" : "var(--text)",
             boxShadow:
               props.value === it.value ? "0 1px 2px rgba(0,0,0,0.1)" : "none",
@@ -39,6 +38,14 @@ export function SegmentedControl<T extends string = string>(props: {
     </div>
   );
 
-  if (props.label) return <LabeledField label={props.label}>{control}</LabeledField>;
-  return control;
+  if (!props.label) return control;
+
+  return (
+    <div className="grid gap-2">
+      <div className="text-sm font-medium" style={{ color: "var(--text)" }}>
+        {props.label}
+      </div>
+      {control}
+    </div>
+  );
 }
