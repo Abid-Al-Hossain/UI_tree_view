@@ -171,8 +171,18 @@ export default function LivePreview({ state }: { state: TreeViewState }) {
                 cursor: node.disabled ? "not-allowed" : "pointer",
               }}
             >
-              <span aria-hidden="true" style={{ color: state.accent, width: 14 }}>{node.expandable ? (open ? "v" : ">") : "-"}</span>
-              {state.showIcons ? <span aria-hidden="true">{node.expandable ? "folder" : "file"}</span> : null}
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, color: state.accent, transition: state.motion ? "transform 200ms ease" : "none", transform: node.expandable ? (open ? "rotate(90deg)" : "rotate(0deg)") : "none" }}>
+                {node.expandable
+                  ? <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  : <circle cx="7" cy="7" r="1.5" fill="currentColor" />}
+              </svg>
+              {state.showIcons ? (
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, color: state.muted }}>
+                  {node.expandable
+                    ? <path d="M1 3.5A1.5 1.5 0 012.5 2h3.086a1.5 1.5 0 011.06.44l.915.914A1.5 1.5 0 008.621 4H11.5A1.5 1.5 0 0113 5.5v5a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 011 10.5v-7z" stroke="currentColor" strokeWidth="1.2" />
+                    : <><rect x="2" y="1.5" width="10" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.2" /><path d="M4.5 5h5M4.5 7.5h5M4.5 10h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></>}
+                </svg>
+              ) : null}
               <span>{node.label}</span>
             </div>
           );

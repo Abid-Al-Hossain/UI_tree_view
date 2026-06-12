@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   PreviewPanel,
   type PreviewCanvasMode,
@@ -76,10 +76,17 @@ function DirectPreviewDownloadPanel({
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
   const [isDownloading, setIsDownloading] = useState(false);
   const [fileName, setFileName] = useState(downloadName);
+  const downloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setFileName(downloadName);
   }, [downloadName]);
+
+  useEffect(() => {
+    return () => {
+      if (downloadTimerRef.current !== null) clearTimeout(downloadTimerRef.current);
+    };
+  }, []);
 
   const handleDownload = () => {
     const blob = new Blob([code], { type: "text/plain;charset=utf-8" });
@@ -90,7 +97,8 @@ function DirectPreviewDownloadPanel({
     anchor.click();
     URL.revokeObjectURL(href);
     setIsDownloading(true);
-    window.setTimeout(() => setIsDownloading(false), 1600);
+    if (downloadTimerRef.current !== null) clearTimeout(downloadTimerRef.current);
+    downloadTimerRef.current = setTimeout(() => setIsDownloading(false), 1600);
   };
 
   return (
@@ -145,11 +153,19 @@ function IframePreviewDownloadPanel(props: IframePreviewDownloadPanelProps) {
 
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
   const [isDownloading, setIsDownloading] = useState(false);
+  const downloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (downloadTimerRef.current !== null) clearTimeout(downloadTimerRef.current);
+    };
+  }, []);
 
   const handleDownloadWithFeedback = () => {
     handleDownload();
     setIsDownloading(true);
-    window.setTimeout(() => setIsDownloading(false), 1600);
+    if (downloadTimerRef.current !== null) clearTimeout(downloadTimerRef.current);
+    downloadTimerRef.current = setTimeout(() => setIsDownloading(false), 1600);
   };
 
   return (
