@@ -175,7 +175,7 @@ export default function TreeViewComponent() {
                 fontSize: 14,
               }}
             >
-              <span aria-hidden="true" style={{ color: state.accent, width: 14, transition: state.motion ? "transform 200ms ease" : "none" }}>{node.expandable ? (open ? "v" : ">") : "-"}</span>
+              <span aria-hidden="true" style={{ color: state.accent, width: 14, transition: state.transitionDuration > 0 ? "$1" : "none" }}>{node.expandable ? (open ? "v" : ">") : "-"}</span>
               {state.showIcons ? <span aria-hidden="true">{node.expandable ? "folder" : "file"}</span> : null}
               <span>{node.label}</span>
             </div>
