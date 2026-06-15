@@ -38,9 +38,9 @@ function shell(state: TreeViewState): CSSProperties {
     minHeight: state.height,
     padding: state.padding,
     borderRadius: buildRadius(state),
-    border: `${state.borderWidth}px ${state.borderStyle} ${state.border}`,
+    border: `${state.borderWidth}px ${state.borderStyle} ${state.disabled && state.disabledUseCustomColors ? state.disabledBorder : state.border}`,
     boxShadow: buildShadow(state),
-    background: state.background,
+    background: state.disabled && state.disabledUseCustomColors ? state.disabledBg : state.background,
     color: state.foreground,
     fontFamily: resolveFont(state),
     fontStyle: state.fontStyle,
@@ -48,7 +48,8 @@ function shell(state: TreeViewState): CSSProperties {
     textDecoration: state.textDecoration,
     letterSpacing: `${state.letterSpacing}${state.letterSpacingUnit}`,
     lineHeight: state.lineHeight,
-    opacity: state.disabled ? 0.55 : 1,
+    opacity: state.disabled ? state.disabledOpacity : 1,
+    cursor: state.disabled ? state.disabledCursor : undefined,
   };
 }
 
@@ -86,6 +87,7 @@ export default function LivePreview({ state }: { state: TreeViewState }) {
   const initialSelected = state.selectionMode === "none" ? -1 : Math.min(1, nodes.length - 1);
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(initialSelected);
+  const [hoverIndex, setHoverIndex] = useState(-1);
   const [expanded, setExpanded] = useState(() => new Set(nodes.slice(0, state.expandedCount).filter((node) => node.expandable).map((node) => node.id)));
   const isLoading = state.previewState === "loading";
   const isEmpty = state.previewState === "empty";
@@ -162,12 +164,16 @@ export default function LivePreview({ state }: { state: TreeViewState }) {
         data-audit="tree-preview"
         data-testid="tree-preview"
       >
-        {isLoading ? <div role="status" className="px-3 py-2 text-sm" style={{ color: state.muted }}>Loading tree nodes...</div> : null}
+        {isLoading ? <div role="status" className="px-3 py-2 text-sm" style={{ color: state.loadingSpinnerColor }}>Loading tree nodes...</div> : null}
         {isEmpty ? <div role="treeitem" aria-selected={false} aria-level={1} aria-posinset={1} aria-setsize={1} className="px-3 py-2 text-sm" style={{ color: state.muted }}>No tree nodes available.</div> : null}
         {!isLoading && !isEmpty ? nodes.map((node, index) => {
           const active = index === activeIndex;
           const selected = state.previewState === "selected" ? index === selectedIndex : state.selectionMode !== "none" && index === selectedIndex;
+          const hovered = hoverIndex === index && !node.disabled && !selected;
           const open = expanded.has(node.id);
+          const nodeBg = selected ? state.itemActiveBg : active && !hovered ? state.itemFocusBg : hovered ? state.itemHoverBg : state.itemBg;
+          const nodeColor = node.disabled ? state.itemDisabledColor : selected ? state.itemSelectedText : hovered ? state.itemHoverText : state.itemText;
+          const folderColor = node.expandable ? (open ? state.folderOpenIconColor : state.folderIconColor) : state.leafIconColor;
 
           return (
             <div
@@ -186,22 +192,34 @@ export default function LivePreview({ state }: { state: TreeViewState }) {
                 setActiveIndex(index);
                 if (state.selectionMode !== "none") setSelectedIndex(index);
               }}
+              onMouseEnter={() => setHoverIndex(index)}
+              onMouseLeave={() => setHoverIndex(-1)}
               onDoubleClick={() => toggleExpanded(node)}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm outline-none transition"
+              className="flex items-center gap-2 text-sm outline-none transition"
               style={{
-                marginLeft: (node.level - 1) * 18,
-                background: selected ? `color-mix(in oklab, ${state.accent} 28%, transparent)` : active ? "rgba(255,255,255,.08)" : "transparent",
-                color: node.disabled ? state.muted : state.foreground,
+                marginLeft: (node.level - 1) * state.indentSize,
+                minHeight: state.itemHeight,
+                padding: `0 ${state.itemPadding}px`,
+                borderRadius: state.itemRadius,
+                borderLeft: node.level > 1 ? `2px solid ${state.indentGuideColor}` : undefined,
+                background: nodeBg,
+                color: nodeColor,
+                outline: selected ? `1px solid ${state.itemSelectedBorder}` : undefined,
                 cursor: node.disabled ? "not-allowed" : "pointer",
               }}
             >
-              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, color: state.accent, transition: state.transitionDuration > 0 ? "transform 200ms ease" : "none", transform: node.expandable ? (open ? "rotate(90deg)" : "rotate(0deg)") : "none" }}>
+              <svg aria-hidden="true" width={state.expandIconSize} height={state.expandIconSize} viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, color: state.expandIconColor, transition: state.transitionDuration > 0 ? "transform 200ms ease" : "none", transform: node.expandable ? (open ? "rotate(90deg)" : "rotate(0deg)") : "none" }}>
                 {node.expandable
                   ? <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   : <circle cx="7" cy="7" r="1.5" fill="currentColor" />}
               </svg>
+              {state.checkboxEnabled ? (
+                <span aria-hidden="true" className="grid place-items-center" style={{ width: 16, height: 16, flexShrink: 0, borderRadius: 4, border: `1.5px solid ${state.checkboxColor}`, background: selected ? state.checkboxCheckedBg : "transparent" }}>
+                  {selected ? <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-5" stroke={state.background} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg> : null}
+                </span>
+              ) : null}
               {state.showIcons ? (
-                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, color: state.muted }}>
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, color: folderColor }}>
                   {node.expandable
                     ? <path d="M1 3.5A1.5 1.5 0 012.5 2h3.086a1.5 1.5 0 011.06.44l.915.914A1.5 1.5 0 008.621 4H11.5A1.5 1.5 0 0113 5.5v5a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 011 10.5v-7z" stroke="currentColor" strokeWidth="1.2" />
                     : <><rect x="2" y="1.5" width="10" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.2" /><path d="M4.5 5h5M4.5 7.5h5M4.5 10h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></>}

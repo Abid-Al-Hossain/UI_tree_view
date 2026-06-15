@@ -1,4 +1,4 @@
-export type SectionId = "presets" | "basics" | "metadata" | "content" | "items" | "behavior" | "layout" | "placement" | "sizing" | "colors" | "border" | "radius" | "shadow" | "typography" | "transitions" | "focus-ring" | "states" | "accessibility";
+export type SectionId = "presets" | "basics" | "metadata" | "content" | "items" | "behavior" | "layout" | "placement" | "sizing" | "colors" | "border" | "radius" | "shadow" | "typography" | "transitions" | "focus-ring" | "states" | "disabled" | "accessibility";
 
 export type TreeViewState = {
   title: string;
@@ -54,11 +54,18 @@ export type TreeViewState = {
   muted: string;
   accent: string;
   border: string;
+  itemActiveBg: string;
   titleSize: number;
   bodySize: number;
   fontWeight: number;
   previewState: "default" | "hover" | "focus" | "active" | "open" | "closed" | "selected" | "loading" | "empty" | "error" | "success";
   disabled: boolean;
+  disabledOpacity: number;
+  disabledCursor: "not-allowed" | "default" | "pointer";
+  disabledUseCustomColors: boolean;
+  disabledBg: string;
+  disabledText: string;
+  disabledBorder: string;
   role: "tree";
   itemCount: number;
   depth: number;
@@ -66,6 +73,34 @@ export type TreeViewState = {
   expandedCount: number;
   showIcons: boolean;
   disabledItems: number;
+  // Node colors & states
+  itemBg: string;
+  itemText: string;
+  itemHoverBg: string;
+  itemHoverText: string;
+  itemSelectedText: string;
+  itemSelectedBorder: string;
+  itemFocusBg: string;
+  itemDisabledColor: string;
+  // Node geometry
+  itemHeight: number;
+  itemPadding: number;
+  itemRadius: number;
+  // Expand icon & indent
+  expandIconColor: string;
+  expandIconSize: number;
+  indentSize: number;
+  indentGuideColor: string;
+  // Folder / leaf icons
+  leafIconColor: string;
+  folderIconColor: string;
+  folderOpenIconColor: string;
+  // Checkbox
+  checkboxEnabled: boolean;
+  checkboxColor: string;
+  checkboxCheckedBg: string;
+  // Loading
+  loadingSpinnerColor: string;
 };
 
 export type StudioPreset = { id: string; family: string; archetype: string; variant: string; size: string; tags: string[]; state: Partial<TreeViewState> & Record<string, unknown> };
@@ -138,6 +173,10 @@ export const SECTIONS: Array<{ id: SectionId; label: string }> = [
   {
     "id": "states",
     "label": "State Preview"
+  },
+  {
+    "id": "disabled",
+    "label": "Disabled"
   },
   {
     "id": "accessibility",

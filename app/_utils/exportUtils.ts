@@ -10,6 +10,9 @@ export function buildReactCode(state: TreeViewState) {
   return `import * as React from "react";
 
 const state = ${JSON.stringify(state, null, 2)};
+function resolveFont(s) { return s.fontBucket === "google" ? '"' + s.googleFontFamily + '", sans-serif' : "inherit"; }
+function buildShadow(s) { if (!s.shadowEnabled) return "none"; var hex = Math.round(s.shadowOpacity * 255).toString(16).padStart(2, "0"); return s.shadowX + "px " + s.shadowY + "px " + s.shadowBlur + "px " + s.shadowSpread + "px " + s.shadowColor + hex; }
+
 
 function buildNodes(config) {
   const count = Math.max(1, config.itemCount);
@@ -46,12 +49,12 @@ function panelStyle(config) {
     minHeight: config.height,
     padding: config.padding,
     borderRadius: config.radius,
-    border: config.borderWidth + "px solid " + config.border,
+    border: config.borderWidth + "px " + config.borderStyle + " " + (config.disabled && config.disabledUseCustomColors ? config.disabledBorder : config.border),
     boxShadow: "0 " + Math.round(config.shadow / 3) + "px " + config.shadow + "px rgba(0,0,0,.28)",
     background: config.background,
     color: config.foreground,
     fontFamily: config.fontFamily,
-    opacity: config.disabled ? 0.55 : 1,
+    opacity: config.disabled ? (config.disabledOpacity ?? 0.5) : 1,
     display: "grid",
     gap: 16,
   };
@@ -62,6 +65,7 @@ export default function TreeViewComponent() {
   const initialSelected = state.selectionMode === "none" ? -1 : Math.min(1, nodes.length - 1);
   const [activeIndex, setActiveIndex] = React.useState(0);
   const [selectedIndex, setSelectedIndex] = React.useState(initialSelected);
+  const [hoverIndex, setHoverIndex] = React.useState(-1);
   const [expanded, setExpanded] = React.useState(() => new Set(nodes.slice(0, state.expandedCount).filter((node) => node.expandable).map((node) => node.id)));
   const isLoading = state.previewState === "loading";
   const isEmpty = state.previewState === "empty";
@@ -137,12 +141,16 @@ export default function TreeViewComponent() {
         data-audit="tree-preview"
         data-testid="tree-preview"
       >
-        {isLoading ? <div role="status" style={{ padding: "8px 12px", color: state.muted, fontSize: 14 }}>Loading tree nodes...</div> : null}
+        {isLoading ? <div role="status" style={{ padding: "8px 12px", color: state.loadingSpinnerColor, fontSize: 14 }}>Loading tree nodes...</div> : null}
         {isEmpty ? <div role="treeitem" aria-selected={false} aria-level={1} aria-posinset={1} aria-setsize={1} style={{ padding: "8px 12px", color: state.muted, fontSize: 14 }}>No tree nodes available.</div> : null}
         {!isLoading && !isEmpty ? nodes.map((node, index) => {
           const active = index === activeIndex;
           const selected = state.previewState === "selected" ? index === selectedIndex : state.selectionMode !== "none" && index === selectedIndex;
+          const hovered = hoverIndex === index && !node.disabled && !selected;
           const open = expanded.has(node.id);
+          const nodeBg = selected ? state.itemActiveBg : active && !hovered ? state.itemFocusBg : hovered ? state.itemHoverBg : state.itemBg;
+          const nodeColor = node.disabled ? state.itemDisabledColor : selected ? state.itemSelectedText : hovered ? state.itemHoverText : state.itemText;
+          const folderColor = node.expandable ? (open ? state.folderOpenIconColor : state.folderIconColor) : state.leafIconColor;
 
           return (
             <div
@@ -161,22 +169,28 @@ export default function TreeViewComponent() {
                 setActiveIndex(index);
                 if (state.selectionMode !== "none") setSelectedIndex(index);
               }}
+              onMouseEnter={() => setHoverIndex(index)}
+              onMouseLeave={() => setHoverIndex(-1)}
               onDoubleClick={() => toggleExpanded(node)}
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                marginLeft: (node.level - 1) * 18,
-                padding: "8px 12px",
-                borderRadius: 12,
-                background: selected ? "color-mix(in oklab, " + state.accent + " 28%, transparent)" : active ? "rgba(255,255,255,.08)" : "transparent",
-                color: node.disabled ? state.muted : state.foreground,
-                cursor: node.disabled ? "not-allowed" : "pointer",
+                marginLeft: (node.level - 1) * state.indentSize,
+                minHeight: state.itemHeight,
+                padding: "0 " + state.itemPadding + "px",
+                borderRadius: state.itemRadius,
+                borderLeft: node.level > 1 ? "2px solid " + state.indentGuideColor : undefined,
+                background: nodeBg,
+                color: nodeColor,
+                outline: selected ? "1px solid " + state.itemSelectedBorder : undefined,
+                cursor: node.disabled ? state.disabledCursor : "pointer",
                 fontSize: 14,
               }}
             >
-              <span aria-hidden="true" style={{ color: state.accent, width: 14, transition: state.transitionDuration > 0 ? "$1" : "none" }}>{node.expandable ? (open ? "v" : ">") : "-"}</span>
-              {state.showIcons ? <span aria-hidden="true">{node.expandable ? "folder" : "file"}</span> : null}
+              <span aria-hidden="true" style={{ color: state.expandIconColor, width: state.expandIconSize, transition: state.transitionDuration > 0 ? "all " + state.transitionDuration + "ms " + state.transitionEasing : "none" }}>{node.expandable ? (open ? "v" : ">") : "-"}</span>
+              {state.checkboxEnabled ? <span aria-hidden="true" style={{ display: "inline-grid", placeItems: "center", width: 16, height: 16, borderRadius: 4, border: "1.5px solid " + state.checkboxColor, background: selected ? state.checkboxCheckedBg : "transparent", color: state.background, fontSize: 10 }}>{selected ? "x" : ""}</span> : null}
+              {state.showIcons ? <span aria-hidden="true" style={{ color: folderColor }}>{node.expandable ? "folder" : "file"}</span> : null}
               <span>{node.label}</span>
             </div>
           );
