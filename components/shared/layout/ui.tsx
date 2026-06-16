@@ -64,7 +64,7 @@ export function Segmented(props: {
 }) {
   return (
     <div
-      className="inline-flex w-full rounded-xl border p-1"
+      className="flex flex-wrap w-full gap-1.5 rounded-xl border p-1"
       style={{
         borderColor: "var(--border)",
         background: "color-mix(in oklab, var(--surface) 65%, transparent)",
@@ -75,7 +75,7 @@ export function Segmented(props: {
           key={it.value}
           type="button"
           onClick={() => props.onChange(it.value)}
-          className="w-full rounded-lg px-3 py-2 text-sm font-semibold uf-clickable"
+          className="flex-1 min-w-[72px] rounded-lg px-3 py-2 text-sm font-semibold uf-clickable whitespace-nowrap"
           style={{
             background:
               props.value === it.value ? "var(--primary)" : "transparent",
