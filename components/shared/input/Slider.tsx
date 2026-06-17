@@ -21,12 +21,7 @@ export default function Slider(props: SliderProps) {
       step={props.step ?? 1}
       value={props.value}
       onChange={(e) => {
-        if (props.label) {
-          (props.onChange as (v: number) => void)(Number(e.target.value));
-          return;
-        }
-
-        (props.onChange as (v: string) => void)(e.target.value);
+        props.onChange(Number(e.target.value));
       }}
       disabled={props.disabled}
       className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary)] hover:accent-[var(--primary-hover)] transition-all"
