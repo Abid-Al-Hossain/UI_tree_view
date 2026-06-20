@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import ContrastGuard from "@/components/shared/color/ContrastGuard";
 import AppShell from "@/components/shared/layout/AppShell";
 import { PlaygroundLayout } from "@/components/shared/layout/PlaygroundLayout";
 import { useHistoryState } from "@/components/hooks/useHistoryState";
@@ -54,5 +55,5 @@ export default function Page() {
     <UndoRedoButtons undo={undo} redo={redo} reset={handleReset} canUndo={canUndo} canRedo={canRedo} />
   );
 
-  return <AppShell contentOverflow="hidden"><PlaygroundLayout title="Tree View Studio" headerActions={headerActions} controls={controls} preview={output} /></AppShell>;
+return <AppShell contentOverflow="hidden"><PlaygroundLayout title="Tree View Studio" headerActions={headerActions} controls={controls} preview={output} /><ContrastGuard /></AppShell>;
 }
