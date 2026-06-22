@@ -89,6 +89,40 @@ export function Segmented(props: {
   );
 }
 
+/**
+ * FilterSelect — same prop shape as `Segmented` (value / onChange(value) /
+ * items|options) but renders a compact native dropdown styled like the studio's
+ * other selects. Use this for preset FILTERS with several options: a segmented
+ * control with many options collapses to a tall one-per-row stack in the narrow
+ * filter grid, whereas a dropdown stays compact and consistent.
+ */
+export function FilterSelect(props: {
+  value: string;
+  onChange: (value: string) => void;
+  items?: { value: string; label: string }[];
+  options?: { value: string; label: string }[];
+}) {
+  const opts = props.items ?? props.options ?? [];
+  return (
+    <select
+      value={props.value}
+      onChange={(e) => props.onChange(e.target.value)}
+      className="w-full rounded-xl border px-3 py-2 text-sm outline-none uf-clickable"
+      style={{
+        borderColor: "var(--border)",
+        background: "color-mix(in oklab, var(--surface) 70%, transparent)",
+        color: "var(--text)",
+      }}
+    >
+      {opts.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export function ExportWarningBadge({
   label = "React Export Only",
 }: {

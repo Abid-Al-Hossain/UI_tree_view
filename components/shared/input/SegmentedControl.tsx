@@ -23,7 +23,7 @@ export function SegmentedControl(props: {
           key={it.value}
           type="button"
           onClick={() => props.onChange(it.value)}
-          className="flex-1 min-w-[72px] rounded-lg px-3 py-2 text-sm font-semibold uf-clickable transition-all whitespace-nowrap"
+          className="flex-1 min-w-[64px] rounded-lg px-2.5 py-2 text-sm font-semibold uf-clickable transition-all whitespace-normal break-words text-center leading-tight"
           style={{
             background:
               props.value === it.value ? "var(--primary)" : "transparent",

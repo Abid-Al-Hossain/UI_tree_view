@@ -43,6 +43,18 @@ export default function ContrastGuard({ min = 4.5 }: { min?: number }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Remember the override WE applied per element, so each pass can peel it back
+    // and re-evaluate from the element's ORIGINAL (author) color against the
+    // CURRENT background. Without this the guard is one-way: once it darkens text
+    // for a light background, that text may stay "readable enough" on a later dark
+    // background and never revert — e.g. outline(white canvas) -> solid(dark) keeps
+    // the grey instead of restoring white. WeakMap so we never touch a color the
+    // component itself set (only our own past override is peeled back).
+    const applied = new WeakMap<
+      HTMLElement,
+      { source: string; applied: string }
+    >();
+
     const fix = () => {
       const root =
         document.querySelector('[data-testid="preview-node-container"]') ||
@@ -52,20 +64,52 @@ export default function ContrastGuard({ min = 4.5 }: { min?: number }) {
       for (const el of Array.from(els)) {
         if (el.closest('[aria-hidden="true"]')) continue; // decorative — WCAG exempt
         if (!hasOwnText(el)) continue;
+
+        // Recover the author's INTENDED color. Components set their text color
+        // inline via React, so we can't just removeProperty (React won't re-apply
+        // a value it thinks is unchanged). Instead we remember the source color we
+        // overrode and restore it, then re-decide against the CURRENT background.
+        // This makes the guard reversible: e.g. outline(white canvas) darkens the
+        // text for readability, and switching back to solid(dark) restores white.
+        const prev = applied.get(el);
+        let authorColor: string;
+        if (prev && el.style.color === prev.applied) {
+          // Our override is still in the DOM — restore the author's source color.
+          authorColor = prev.source;
+          el.style.setProperty("color", prev.source);
+        } else {
+          // No override of ours in place (or the component set a new color itself).
+          authorColor = getComputedStyle(el).color;
+          applied.delete(el);
+        }
+
         const cs = getComputedStyle(el);
-        const fg = cs.color;
-        const fgA = parseRgba(fg);
-        if (!fgA) continue;
+        const fgA = parseRgba(authorColor);
+        if (!fgA) {
+          applied.delete(el);
+          continue;
+        }
         // Text sits on its OWN background if it has one, else the nearest opaque ancestor.
         const bg = effectiveBg(el);
         // WCAG AA threshold: 3.0 for large text (>=24px, or >=18.66px bold), else 4.5.
         const fontSize = parseFloat(cs.fontSize) || 16;
         const bold = (parseInt(cs.fontWeight, 10) || 400) >= 700;
         const threshold = fontSize >= 24 || (fontSize >= 18.66 && bold) ? 3 : min;
-        const ratio = fgA.a < 0.5 ? 0 : contrastRatio(fg, bg);
-        if (ratio >= threshold) continue;
-        const fixed = ensureReadable(fgA.a < 1 ? `rgb(${Math.round(fgA.r)}, ${Math.round(fgA.g)}, ${Math.round(fgA.b)})` : fg, bg, threshold);
+        const ratio = fgA.a < 0.5 ? 0 : contrastRatio(authorColor, bg);
+        if (ratio >= threshold) {
+          // Author color is readable on the current background — leave it (restored above).
+          applied.delete(el);
+          continue;
+        }
+        const fixed = ensureReadable(
+          fgA.a < 1
+            ? `rgb(${Math.round(fgA.r)}, ${Math.round(fgA.g)}, ${Math.round(fgA.b)})`
+            : authorColor,
+          bg,
+          threshold,
+        );
         el.style.setProperty("color", fixed, "important");
+        applied.set(el, { source: authorColor, applied: el.style.color });
       }
     };
 
@@ -97,9 +141,25 @@ export default function ContrastGuard({ min = 4.5 }: { min?: number }) {
     };
     observer = new MutationObserver(schedule);
 
+    // CSS transitions (e.g. a button's background animating from a light outline
+    // to a dark solid fill) change the rendered background WITHOUT a DOM mutation,
+    // so the observer never re-fires and a mid-transition override would stick to
+    // the final background. Re-evaluate when transitions start/end so the guard
+    // settles against the FINAL background (and reverts a no-longer-needed fix).
+    const onTransition = () => schedule();
+
     runFix();
     observer.observe(document.body, observeOpts);
-    return () => { observer.disconnect(); if (timer) clearTimeout(timer); };
+    document.addEventListener("transitionend", onTransition, true);
+    document.addEventListener("transitionstart", onTransition, true);
+    document.addEventListener("animationend", onTransition, true);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("transitionend", onTransition, true);
+      document.removeEventListener("transitionstart", onTransition, true);
+      document.removeEventListener("animationend", onTransition, true);
+      if (timer) clearTimeout(timer);
+    };
   }, [min]);
 
   return null;
