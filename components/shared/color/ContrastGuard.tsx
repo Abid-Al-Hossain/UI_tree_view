@@ -128,7 +128,6 @@ export default function ContrastGuard({ min = 4.5 }: { min?: number }) {
     // at most once per ~120ms, but we DO keep running during animations.
     let last = 0;
     let timer: ReturnType<typeof setTimeout> | null = null;
-    let observer: MutationObserver;
     const runFix = () => {
       if (observer) observer.disconnect();
       try { fix(); } finally { if (observer) observer.observe(document.body, observeOpts); }
@@ -139,7 +138,7 @@ export default function ContrastGuard({ min = 4.5 }: { min?: number }) {
       if (dt >= 120) { runFix(); }
       else if (!timer) { timer = setTimeout(() => { timer = null; runFix(); }, 120 - dt); }
     };
-    observer = new MutationObserver(schedule);
+    const observer = new MutationObserver(schedule);
 
     // CSS transitions (e.g. a button's background animating from a light outline
     // to a dark solid fill) change the rendered background WITHOUT a DOM mutation,

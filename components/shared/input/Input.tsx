@@ -5,22 +5,18 @@ import React from "react";
 export interface InputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange"> {
   label?: string;
-  onChange?: (value: any) => void;
+  onChange?: (value: string) => void;
+  onNativeChange?: React.ChangeEventHandler<HTMLInputElement>;
 }
 
 export default function Input(props: InputProps) {
-  const { className, label, onChange, id, ...rest } = props;
-  const inputId = id ?? (label ? label.toLowerCase().replace(/[^a-z0-9]+/g, "-") : undefined);
+  const { className, label, onChange, onNativeChange, id, ...rest } = props;
+  const generatedId = React.useId();
+  const inputId = id ?? generatedId;
 
   const handleChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
-    if (!onChange) return;
-
-    if (label) {
-      (onChange as (value: string) => void)(event.target.value);
-      return;
-    }
-
-    (onChange as React.ChangeEventHandler<HTMLInputElement>)(event);
+    onChange?.(event.currentTarget.value);
+    onNativeChange?.(event);
   };
 
   const input = (
@@ -41,7 +37,7 @@ export default function Input(props: InputProps) {
   if (!label) return input;
 
   return (
-    <label className="grid gap-2 text-sm font-medium" style={{ color: "var(--text)" }}>
+    <label htmlFor={inputId} className="grid gap-2 text-sm font-medium" style={{ color: "var(--text)" }}>
       <span>{label}</span>
       {input}
     </label>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { LabeledField } from "../layout/LabeledField";
 
 import Slider from "./Slider";
@@ -24,24 +24,18 @@ export default function SizeControl(props: {
 }) {
   const { value, onChange, min, max, step = 1, unit = "" } = props;
 
-  // Local text state to allow user to type freely (e.g. empty string)
-  const [text, setText] = useState(String(value));
+  const [draft, setDraft] = useState({ source: value, text: String(value) });
+  const text =
+    draft.source !== value && parseFloat(draft.text) !== value
+      ? String(value)
+      : draft.text;
 
-  // Sync state if prop changes externally
-  useEffect(() => {
-    // Avoid overwriting if usage is parsing same number
-    if (parseFloat(text) === value) return;
-    setText(String(value));
-  }, [value]);
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVal = parseFloat(e.target.value);
-    setText(String(newVal));
-    onChange(newVal);
-  };
+  if (draft.source !== value) {
+    setDraft({ source: value, text });
+  }
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setText(e.target.value);
+    setDraft({ source: value, text: e.target.value });
     const parsed = parseFloat(e.target.value);
     if (!isNaN(parsed)) {
       // We don't clamp immediately on type, only on blur or effectively?
@@ -64,8 +58,8 @@ export default function SizeControl(props: {
         step={step}
         value={clamped}
         onChange={(val) => {
-          setText(val);
-          onChange(parseFloat(val));
+          setDraft({ source: value, text: String(val) });
+          onChange(val);
         }}
       />
       <input

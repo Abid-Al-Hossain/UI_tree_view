@@ -3,24 +3,28 @@
 import React from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
-export interface SelectOption {
-  value: string;
+export interface SelectOption<Value extends string = string> {
+  value: Value;
   label: string;
 }
 
-export interface SelectProps {
+export interface SelectProps<Value extends string = string> {
   label?: string;
-  value: string;
-  onChange: (v: any) => void;
-  options: SelectOption[] | string[]; // Pre-defined options
+  value: Value;
+  onChange: (value: Value) => void;
+  options: readonly (SelectOption<Value> | Value)[]; // Pre-defined options
   children?: React.ReactNode; // Or raw <option> children
   disabled?: boolean;
   className?: string;
   placeholder?: string;
   startContent?: React.ReactNode; // Icon/Element on the left
+  id?: string;
+  "aria-label"?: string;
 }
 
-export default function Select(props: SelectProps) {
+export default function Select<Value extends string = string>(
+  props: SelectProps<Value>,
+) {
   const {
     label,
     value,
@@ -33,8 +37,10 @@ export default function Select(props: SelectProps) {
     startContent,
   } = props;
 
-  const normalizedOptions = options.map((option) =>
-    typeof option === "string" ? { value: option, label: option } : option,
+  const normalizedOptions = options.map((option): SelectOption<Value> =>
+    typeof option === "string"
+      ? { value: option as Value, label: option }
+      : option,
   );
 
   const select = (
@@ -46,8 +52,10 @@ export default function Select(props: SelectProps) {
         {startContent}
       </div>
       <select
+        id={props.id}
+        aria-label={props["aria-label"] ?? label}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value as Value)}
         disabled={disabled}
         className={`w-full h-9 pr-8 appearance-none rounded-xl border text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] disabled:opacity-50 disabled:cursor-not-allowed ${
           startContent ? "pl-9" : "pl-3"

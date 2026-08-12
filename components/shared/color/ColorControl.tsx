@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { norm } from "./colorUtils";
 
 /**
@@ -20,28 +20,22 @@ export default function ColorControl(props: {
 }) {
   const { value, onChange, label, palette } = props;
 
-  // Local state for the text input, initialized from prop
-  const [text, setText] = useState(value);
+  const [draft, setDraft] = useState({ source: value, text: value });
+  const parsedDraft = norm(draft.text);
+  const text =
+    draft.source !== value &&
+    !(parsedDraft.ok && parsedDraft.hex === value)
+      ? value
+      : draft.text;
 
-  // Derived validation
+  if (draft.source !== value) {
+    setDraft({ source: value, text });
+  }
+
   const { ok, hex, rgb } = norm(text);
 
-  // Sync text if prop changes externally (and isn't just valid equivalent of current text)
-  // We avoid clobbering user typing if they are typing "rgb(..."
-  useEffect(() => {
-    // If exact match, ignore
-    if (value === text) return;
-
-    // If the prop value matches the *parsed* text, ignore (allows user to type "rgb(0,0,0)" while value is "#000000")
-    // But if prop changed to something else entirely (e.g. undo), update text.
-    const currentParsed = norm(text);
-    if (currentParsed.ok && currentParsed.hex === value) return;
-
-    setText(value);
-  }, [text, value]);
-
   const handleChange = (newText: string) => {
-    setText(newText);
+    setDraft({ source: value, text: newText });
     const parsed = norm(newText);
     if (parsed.ok) {
       onChange(parsed.hex);

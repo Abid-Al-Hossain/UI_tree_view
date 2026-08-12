@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Switch as HeadlessSwitch } from "@headlessui/react";
-import { LabeledField } from "../layout/LabeledField";
 
 export interface SwitchProps {
   label?: string;
